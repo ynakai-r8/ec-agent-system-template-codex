@@ -274,6 +274,7 @@ handoff/YYYY-MM-DD_HH-MM_handoff.md
 | **越境EC部門（EC特化）** | 🌐CROSSBORDER, 🎌JAPAN-STORY, 💬MULTI-CS | 越境EC運用・日本価値発信・多言語CS | `ec-crossborder`, `ec-japan-storyteller`, `ec-multilingual-cs` |
 | **情報部門（汎用）** | 🔭TREND, 🌍GMT | トレンドインテリジェンス・グローバルマーケティングトレンド | `trend-intel`, `global-marketing-trends` |
 | **AI部門（EC特化）** | 🤖AGENTIC | AIエージェント時代の集客最適化・AI発見性・エージェント間通信 | `ec-agentic-commerce` |
+| **Amazon部門（EC特化）** | 📦AMZ-STRATEGY, 🎯AMZ-OPS-VETERAN | Amazon自社ブランド攻略統括（理論派）／現場運用ベテラン（実演派・3者議論モード対応） | `ec-amazon-strategy`, `ec-amazon-ops-veteran` |
 
 ### 共通知識基盤（Cross-Cutting Skills）
 | Skill名 | 対象Agent | 役割 |
@@ -884,6 +885,7 @@ COMMANDERは「司令塔」であり「実行者」ではない。
 ### 法務・品質チェック
 ```
 /factcheck [対象]    - ファクトチェック（広告表現・LP・商品説明の事実確認・根拠検証）
+/policycheck [対象]  - プラットフォーム公式規約・仕様・アルゴリズムをリアルタイム取得して照合（Amazon/楽天/Google/各広告/各SaaS等・参照URL＋確認日を明示・Fail Closed）
 /legalcheck [対象]   - リーガルチェック（特商法/景表法/薬機法/食品表示法/PL法/資金決済法/JAS法）
 /clo [質問]          - 法務全般（契約・コンプライアンス・知財・7大法律チェック）
 ```
