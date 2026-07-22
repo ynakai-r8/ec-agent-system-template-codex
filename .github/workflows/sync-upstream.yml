@@ -1,0 +1,95 @@
+name: Sync upstream updates
+
+on:
+  push:
+    branches:
+      - agent/sync-upstream-2026-07-22
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout target repository
+        uses: actions/checkout@v4
+        with:
+          ref: agent/sync-upstream-2026-07-22
+          fetch-depth: 0
+
+      - name: Clone upstream repository
+        run: git clone --depth 1 https://github.com/hamano-takashi/ec-agent-system-template-codex.git /tmp/upstream
+
+      - name: Copy upstream additions and updates
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          mkdir -p .agents/skills/ec-amazon-ops-veteran
+          rm -rf .agents/skills/ec-amazon-ops-veteran
+          cp -a /tmp/upstream/.agents/skills/ec-amazon-ops-veteran .agents/skills/
+
+          mkdir -p .agents/skills/platform-policy-check
+          rm -rf .agents/skills/platform-policy-check
+          cp -a /tmp/upstream/.agents/skills/platform-policy-check .agents/skills/
+
+          python3 - <<'PY'
+          from pathlib import Path
+
+          upstream = Path('/tmp/upstream')
+
+          # ec-amazon-strategy は上流最新版を採用する。
+          strategy = Path('.agents/skills/ec-amazon-strategy/SKILL.md')
+          strategy.write_text((upstream / strategy).read_text(encoding='utf-8'), encoding='utf-8')
+
+          # AGENTS.md は個別カスタマイズを保持し、上流で追加された2行だけを反映する。
+          agents = Path('AGENTS.md')
+          text = agents.read_text(encoding='utf-8')
+          upstream_text = (upstream / 'AGENTS.md').read_text(encoding='utf-8')
+
+          additions = []
+          for line in upstream_text.splitlines():
+              if 'Amazon部門（EC特化）' in line or '/policycheck' in line:
+                  additions.append(line)
+
+          for line in additions:
+              if line in text:
+                  continue
+              if 'Amazon部門（EC特化）' in line:
+                  marker = '| **AI部門（EC特化）**'
+                  rows = text.splitlines()
+                  idx = next((i for i, row in enumerate(rows) if marker in row), None)
+                  if idx is not None:
+                      rows.insert(idx + 1, line)
+                      text = '\n'.join(rows) + ('\n' if text.endswith('\n') else '')
+              elif '/policycheck' in line:
+                  rows = text.splitlines()
+                  insert_at = next((i + 1 for i, row in enumerate(rows) if '/factcheck' in row), None)
+                  if insert_at is None:
+                      insert_at = next((i + 1 for i, row in enumerate(rows) if 'コマンド一覧' in row), len(rows))
+                  rows.insert(insert_at, line)
+                  text = '\n'.join(rows) + ('\n' if text.endswith('\n') else '')
+
+          agents.write_text(text, encoding='utf-8')
+          PY
+
+      - name: Commit synchronized files
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            .agents/skills/ec-amazon-ops-veteran \
+            .agents/skills/platform-policy-check \
+            .agents/skills/ec-amazon-strategy/SKILL.md \
+            AGENTS.md
+          if git diff --cached --quiet; then
+            echo "No upstream changes to commit."
+            exit 0
+          fi
+          git commit -m "chore: sync latest upstream EC agent updates"
+          git push origin HEAD:agent/sync-upstream-2026-07-22
